@@ -1,0 +1,89 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\PointHistory;
+use App\Models\Student;
+use App\Services\PointService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class TeacherPointController extends Controller
+{
+    public function __construct(
+        private PointService $pointService,
+    ) {}
+
+    public function assign(Request $request): RedirectResponse
+    {
+        $user = $request->user() ?? auth()->user();
+        if (! $user) {
+            return redirect()->route('login');
+        }
+
+        $mode = $request->input('mode', '1');
+
+        if ($mode === '1') {
+            // Режим 1: одно правило → много учеников (из разных классов)
+            $data = $request->validate([
+                'rule_id'       => ['required', 'integer', 'exists:discipline_rules,id'],
+                'student_ids'   => ['required', 'array', 'min:1'],
+                'student_ids.*' => ['integer', 'exists:students,id'],
+                'comment'       => ['nullable', 'string', 'max:500'],
+            ]);
+
+            $this->pointService->assignPoints(
+                studentIds: $data['student_ids'],
+                ruleIds:    [$data['rule_id']],
+                comment:    (string) ($data['comment'] ?? ''),
+                actorUser:  $user,
+                actorRole:  'teacher',
+            );
+        } else {
+            // Режим 2: один ученик → много правил
+            $data = $request->validate([
+                'student_id'    => ['required', 'integer', 'exists:students,id'],
+                'rule_ids'      => ['required', 'array', 'min:1'],
+                'rule_ids.*'    => ['integer', 'exists:discipline_rules,id'],
+                'comment'       => ['nullable', 'string', 'max:500'],
+            ]);
+
+            $this->pointService->assignPoints(
+                studentIds: [$data['student_id']],
+                ruleIds:    $data['rule_ids'],
+                comment:    (string) ($data['comment'] ?? ''),
+                actorUser:  $user,
+                actorRole:  'teacher',
+            );
+        }
+
+        return redirect()
+            ->route('teacher.dashboard', ['mode' => $mode])
+            ->with('status', 'Баллы успешно назначены.');
+    }
+
+    public function cancel(Request $request, PointHistory $history): RedirectResponse
+    {
+        $user = $request->user() ?? auth()->user();
+        if (! $user) {
+            return redirect()->route('login');
+        }
+
+        // Учитель может отменять только свои назначения
+        if ($history->teacher_id !== $user->id) {
+            abort(403);
+        }
+
+        DB::transaction(function () use ($history) {
+            $history->load('student');
+            if ($history->student) {
+                $history->student->current_points -= $history->points;
+                $history->student->save();
+            }
+            $history->delete();
+        });
+
+        return back()->with('status', 'Назначение отменено, баллы откатаны.');
+    }
+}
