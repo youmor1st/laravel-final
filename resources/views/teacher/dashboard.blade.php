@@ -259,4 +259,4 @@ function checkAll(state) {
     document.querySelectorAll('#students-list input[type=checkbox]').forEach(cb => cb.checked = state);
 }
 </script>
-@endsection
+@endsection››
