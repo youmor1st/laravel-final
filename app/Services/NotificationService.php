@@ -51,4 +51,54 @@ class NotificationService
             ],
         ]);
     }
+
+    public function notifyLowBalanceForAdmin(
+        User $adminUser,
+        User $studentUser,
+        int $currentPoints,
+        string $comment = ''
+    ): Notification {
+        $body = sprintf(
+            'У ученика %s (%s) осталось %d баллов.%s',
+            $studentUser->name,
+            $studentUser->email,
+            $currentPoints,
+            $comment ? ' Комментарий: ' . $comment : ''
+        );
+
+        return Notification::create([
+            'user_id' => $adminUser->id,
+            'type' => 'student_low_points',
+            'title' => 'Внимание: низкий баланс ученика',
+            'body' => $body,
+            'data' => [
+                'student_user_id' => $studentUser->id,
+                'current_points' => $currentPoints,
+                'comment' => $comment,
+            ],
+        ]);
+    }
+
+    public function notifyLowBalanceForStudent(
+        User $studentUser,
+        int $currentPoints,
+        string $comment = ''
+    ): Notification {
+        $body = sprintf(
+            'У вас стало меньше баллов: %d. Вас могут вызвать к завучу.%s',
+            $currentPoints,
+            $comment ? ' Комментарий: ' . $comment : ''
+        );
+
+        return Notification::create([
+            'user_id' => $studentUser->id,
+            'type' => 'low_points_warning',
+            'title' => 'Предупреждение по баллам',
+            'body' => $body,
+            'data' => [
+                'current_points' => $currentPoints,
+                'comment' => $comment,
+            ],
+        ]);
+    }
 }

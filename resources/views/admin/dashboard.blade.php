@@ -3,14 +3,6 @@
 @section('content')
     <h1 class="text-2xl font-semibold mb-4">Админ панель</h1>
 
-    <div class="mb-4 flex flex-wrap gap-2 text-sm">
-        <a href="{{ route('admin.students.index') }}" class="text-indigo-600 hover:underline">Ученики</a>
-        <a href="{{ route('admin.teachers.index') }}" class="text-indigo-600 hover:underline">Учителя</a>
-        <a href="{{ route('admin.classes.index') }}" class="text-indigo-600 hover:underline">Классы</a>
-        <a href="{{ route('admin.rules.index') }}" class="text-indigo-600 hover:underline">Правила</a>
-        <a href="{{ route('admin.users.index') }}" class="text-indigo-600 hover:underline">Аккаунты</a>
-    </div>
-
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div class="bg-white p-4 rounded shadow">
             <h2 class="font-semibold text-sm text-gray-500 mb-1">Студентов</h2>
@@ -49,6 +41,7 @@
                         <th class="text-left py-2 pr-2">Правило</th>
                         <th class="text-left py-2 pr-2">Баллы</th>
                         <th class="text-left py-2 pr-2">Комментарий</th>
+                        <th class="text-left py-2 pr-2">Действие</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -78,6 +71,12 @@
                             </td>
                             <td class="py-2 pr-2">
                                 {{ $record->comment }}
+                            </td>
+                            <td class="py-2 pr-2">
+                                <form method="POST" action="{{ route('admin.points.cancel', $record) }}" onsubmit="return confirm('Удалить запись истории и откатить баллы?');">
+                                    @csrf
+                                    <button type="submit" class="text-red-600 text-sm">Удалить</button>
+                                </form>
                             </td>
                         </tr>
                     @endforeach

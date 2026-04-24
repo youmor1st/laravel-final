@@ -6,6 +6,7 @@ use App\Models\DisciplineRule;
 use App\Models\PointHistory;
 use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Models\Teacher;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -15,7 +16,7 @@ class DashboardController extends Controller
     public function admin(): View
     {
         $totalStudents = Student::count();
-        $totalTeachers = User::where('role', 'teacher')->count();
+        $totalTeachers = Teacher::count();
 
         $allHistory = PointHistory::all();
         $sumPositivePoints = $allHistory->where('points', '>', 0)->sum('points');

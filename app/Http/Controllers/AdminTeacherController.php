@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class AdminTeacherController extends Controller
@@ -93,7 +94,14 @@ class AdminTeacherController extends Controller
 
     public function destroy(Teacher $teacher): RedirectResponse
     {
-        $teacher->delete();
+        DB::transaction(function () use ($teacher): void {
+            $user = $teacher->user;
+            $teacher->delete();
+
+            if ($user) {
+                $user->delete();
+            }
+        });
 
         return redirect()->route('admin.teachers.index')->with('status', 'Учитель удалён.');
     }

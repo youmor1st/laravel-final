@@ -25,15 +25,20 @@
             .btn-primary { background: #4f46e5; color: #fff; width: 100%; }
             .btn-primary:hover { background: #4338ca; }
             .checkbox-row { display: flex; align-items: center; gap: .5rem; margin-bottom: 1rem; font-size: .875rem; }
+            .top-subnav { background: #fff; border-bottom: 1px solid #e5e7eb; padding: .65rem 1.5rem; display: flex; gap: 1rem; font-size: .875rem; }
+            .top-subnav a { color: #4f46e5; text-decoration: none; }
+            .top-subnav a.active { color: #111827; font-weight: 600; }
+            .top-subnav a:hover { text-decoration: underline; }
         </style>
     @endif
 </head>
 <body>
+    @php $role = auth()->check() ? (auth()->user()->role->value ?? auth()->user()->role) : null; @endphp
     <nav>
         <div class="brand">Discipline Diary</div>
         @auth
             <div class="user-info">
-                <span>{{ auth()->user()->name }} ({{ auth()->user()->role->value ?? auth()->user()->role }})</span>
+                <span>{{ auth()->user()->name }} ({{ $role }})</span>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit">Выйти</button>
@@ -41,6 +46,23 @@
             </div>
         @endauth
     </nav>
+    @auth
+        @if ($role !== 'teacher')
+            <div class="top-subnav">
+                <a href="{{ route('notifications.index') }}" class="{{ request()->routeIs('notifications.*') ? 'active' : '' }}">Уведомления</a>
+            </div>
+        @endif
+        @if ($role === 'admin')
+            <div class="top-subnav">
+                <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">Главная</a>
+                <a href="{{ route('admin.students.index') }}" class="{{ request()->routeIs('admin.students.*') ? 'active' : '' }}">Ученики</a>
+                <a href="{{ route('admin.teachers.index') }}" class="{{ request()->routeIs('admin.teachers.*') ? 'active' : '' }}">Учителя</a>
+                <a href="{{ route('admin.classes.index') }}" class="{{ request()->routeIs('admin.classes.*') ? 'active' : '' }}">Классы</a>
+                <a href="{{ route('admin.rules.index') }}" class="{{ request()->routeIs('admin.rules.*') ? 'active' : '' }}">Правила</a>
+                <a href="{{ route('admin.points') }}" class="{{ request()->routeIs('admin.points*') ? 'active' : '' }}">Выставление баллов</a>
+            </div>
+        @endif
+    @endauth
 
     <main>
         @if (session('status'))
